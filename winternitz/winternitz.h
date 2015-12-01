@@ -5,6 +5,8 @@
 Winternitz is a one-time use digital signature with selectable tradeoff between
 speed and size.
 
+### Signing
+
 The public signature of each k-th chunk of the message being signed, is the
 value of a cryptographic hash function H applied repetitively n times to the
 k-th secret signature key value, i.e Hⁿ(secretₖ), where n is the value of the
@@ -19,39 +21,65 @@ The public signature also includes the chunk signatures of the checksum. The
 checksum is the sum of all the values for the chunks in the signed message.
 No checksum of the checksum is needed.
 
-A signature verifies if A) its checksum is equal to (or never occurring greater
-than) the checksum of the message, thus sufficient if chunk signatures for the
-checksum match; and B) if the public verification key value equals the hash
-function applied to the concatenation of all Hⁿ(xₖ), where xₖ is the k-th chunk
-signature and n is the value of the k-th chunk taken from the chunks from the
-message followed by chunks of the checksum. Since B does A, then only B needs
-to be verified.
+### Verification
+
+A signature verifies if A) its checksum is equal to (or the never occurring
+case of greater than) the checksum of the message; and B) if the public
+verification key value equals the hash function applied to the concatenation of
+all Hⁿ(xₖ), where xₖ is the k-th chunk signature and n is the value of the k-th
+chunk from the message followed by the checksum. Since A is equivalent to
+checking that the chunk signatures for the checksum have not changed (and per
+the explanation that follows the chunk signatures could not have been forged),
+then B does A; thus only B needs to be verified.
+
+### Unforgeable
+
+The checksum is required to prevent the construction—from a legitimate
+signature—of a forged signature which signs a message other than the message
+that was legitimately signed. Chunk signatures can only be plausibly computed in
+the forward direction of repetitive hash function application, because the
+irreversibility (i.e. confused invertibility) security of a cryptographic hash
+function H(x) is the computational implausibility to find the preimage x.
 
 Due to fact that Hⁱ⁺ⁿ(x) = Hⁱ(Hⁿ(x))—e.g. given H²(x) then H⁴(x) = H²(H²(x)) =
-H(H(H²(x)))—forged chunk signatures can be computed for chunks that have
-lesser values than their respective chunks in the legitimately signed message
-(and its checksum). But such a forgery requires a greater value for the
-checksum, yet the forged chunk signatures for the checksum can only decrease
-the value of the checksum.
+H(H(H²(x)))—forged chunk signatures can be computed by forward hashing the
+legitimate chunk signatures for chunks that have *lesser* values than their
+respective chunks in the legitimately signed message and checksum. Lesser is due
+to “subtracted from a chunk’s maximum possible value” in the second paragraph
+above; thus lesser values require a greater n number of forward direction hash
+function repetitions than the legitimate chunk signature. But such a forgery
+requires a *greater* value for the checksum (greater because checksums
+accumulate not subtracted from the maximum possible chunk value), yet this would
+require lower n number of repetitions for chunk signatures of the checksum— i.e.
+requires the implausible computation of the preimage of the legitimate chunk
+signature.
+
+In other words, message chunk signatures can only be forged by *decreasing* (not
+increasing) the chunk values in the signed message, yet this requires forging
+checksum chunk signatures for *increasing* chunk values. Conversely if checksum
+chunk values decrease, then message chunk values must increase. In both cases,
+increasing a chunk value requires implausible computation of the preimage of the
+corresponding legitimately signed chunk signature. Thus a forged signaure is
+implausible.
 
 In other words, the signature for the next lesser decrement of the chunk value
 is the hash function applied to the signature of the chunk value. Whereas, the
 signature for the next greater increment of the chunk value is preimage x of
-the hash function H(x) where H(x) is the signature of the chunk value. The
-security of a cryptographic hash function is predicated on the implausibility
-of computing a preimage. Thus a forged signaure is implausible.
+the hash function H(x) where H(x) is the signature of the chunk value.
+
+### Generalization
 
 Winternitz[1] is a generalization of the Merkle’s improvement[2] to Lamport
 signatures, wherein the chunk size is 1 bit. Lamport required two sets of public
-and secret keys for each of the possible values of the binary chunk. Merkle
+and secret keys, one for each of the possible values of the binary chunk. Merkle
 invented the checksum to replace the functionality of Lamport’s set for the 0
 value case. Robert Winternitz[3] further generalized Merkle’s improvement to
 chunks larger than 1 bit.
 
-Note we reverse the direction of repetitive hash function application from [1]
-so as to coincide with [2], which also has the (probably neglible speed)
-benefit that verification does not have to subtract chunk values from the
-maximum chunk value.
+This implementation reverses the direction of repetitive hash function
+application from [1] so as to coincide with [2], which also has the (probably
+neglible speed) benefit that verification does not have to subtract chunk values
+from the maximum chunk value.
 
 Afaics (2^w - 1 - b_i) would be correct for equation (11) in [1] because the
 chunk values b_i will never be greater than 2^w - 1; thus fewer bits needed for
@@ -89,7 +117,8 @@ consumed and produced.
 #include "../cmacros/export.h"
 
 /*
-This API is orthogonal to the hash function and key management employed.
+This API is orthogonal (i.e. agnostic) to the hash function and key management
+employed.
 
 The callback function is called once for each chunk, with the checksum chunks
 last.
