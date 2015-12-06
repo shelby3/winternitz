@@ -2,7 +2,7 @@
 
 Winternitz one-time use digital signature with selectable tradeoff between speed and size.
 
-Refer to /winternitz/[Winternitz.md] for more detailed documentation.
+Refer to /[Winternitz.md] for more detailed documentation.
 
 ### Added Subrepositories
 
@@ -11,4 +11,4 @@ Refer to /winternitz/[Winternitz.md] for more detailed documentation.
 shelby3/cmacros | /cmacros   | b817c6cc5a0231a0ad9bb1e71a69a15df05e4d80
 
 [Added]: https://gist.github.com/shelby3/f69c969ecaa3ecfbe579#subrepositories
-[Winternitz.md]: https://github.com/shelby3/winternitz/blob/master/winternitz/Winternitz.md
+[Winternitz.md]: https://github.com/shelby3/winternitz/blob/master/Winternitz.md
